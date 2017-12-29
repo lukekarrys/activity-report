@@ -3,12 +3,13 @@ const _ = require('lodash')
 const moment = require('moment')
 const Table = require('cli-table')
 
-const FILE = 'Export.csv'
+const FILE = process.argv[2] || 'Export'
+const MOVE = +(process.argv[3] || 500)
 const TODAY = moment()
 const DATE_FORMAT = 'M/D/YY'
 const YEAR_FORMAT = 'YYYY'
 const TYPES = { TODAY: 'today', MET: 'met', TOTAL: 'total', YEAR: 'year' }
-const GOALS = { MOVE: 500, EXERCISE: 30, STAND: 12 }
+const GOALS = { MOVE, EXERCISE: 30, STAND: 12 }
 
 const pctStr = (obj) => `${obj[TYPES.MET]}/${obj[TYPES.TOTAL]}`
 const pct = (obj) => (obj[TYPES.MET] / obj[TYPES.TOTAL] * 100).toFixed(1)
@@ -37,7 +38,7 @@ const toTable = (data) => {
   return table.toString()
 }
 
-new CSV().fromFile(FILE, (err, days) => _.chain(days)
+new CSV().fromFile(`${FILE}.csv`, (err, days) => _.chain(days)
   // Add the date as a moment
   .map((d) => (d.date = moment(d['-'], DATE_FORMAT), d))
   // Group by year
