@@ -4,7 +4,10 @@ const moment = require('moment')
 const Table = require('cli-table')
 
 const FILE = process.argv[2] || 'Export'
+const TRANSFORM = process.argv[3] || 'def'
 const MOVE = +(process.argv[3] || 500)
+const MIN_DAYS = +(process.argv[4] || 365)
+
 const TODAY = moment()
 const DATE_FORMAT = 'M/D/YY'
 const YEAR_FORMAT = 'YYYY'
@@ -38,17 +41,26 @@ const toTable = (data) => {
   return table.toString()
 }
 
+const transformers = {
+  def: calculate,
+  sum: (days, goal) => _.sumBy(days, (d) => +d[goal])
+}
+
+const thru = {
+  def: toTable
+}
+
 new CSV().fromFile(`${FILE}.csv`, (err, days) => _.chain(days)
   // Add the date as a moment
   .map((d) => (d.date = moment(d['-'], DATE_FORMAT), d))
   // Group by year
   .groupBy((d) => d.date.format(YEAR_FORMAT))
   // Only full years or the current year are useful
-  .pickBy((days, year) => days.length >= 365 || year === TODAY.format(YEAR_FORMAT))
+  .pickBy((days, year) => year !== '1969' && days.length >= MIN_DAYS || year === TODAY.format(YEAR_FORMAT))
   // Shape each year object like the GOALS object above
-  .transform((res, days, year) => res[year] = _.transform(GOALS, (res, __, goal) => res[goal] = calculate(days, goal), []))
+  .transform((res, days, year) => res[year] = _.transform(GOALS, (res, __, goal) => res[goal] = transformers[TRANSFORM](days, goal), []))
   // Make it a table
-  .thru(toTable)
+  .thru(thru[TRANSFORM] || _.identity)
   // Log it
   .tap(console.log)
   // End it
