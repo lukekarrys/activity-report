@@ -4,8 +4,8 @@ const moment = require('moment')
 const Table = require('cli-table')
 
 const FILE = process.argv[2] || 'Export'
-const TRANSFORM = process.argv[3] || 'def'
-const MOVE = +(process.argv[3] || 500)
+const TRANSFORM = process.argv[3] || 'metgoal'
+const MOVE = +(process.argv[4] || 500)
 const MIN_DAYS = +(process.argv[4] || 365)
 
 const TODAY = moment()
@@ -42,12 +42,12 @@ const toTable = (data) => {
 }
 
 const transformers = {
-  def: calculate,
+  metgoal: calculate,
   sum: (days, goal) => _.sumBy(days, (d) => +d[goal])
 }
 
 const thru = {
-  def: toTable
+  metgoal: toTable
 }
 
 new CSV().fromFile(`${FILE}.csv`, (err, days) => _.chain(days)
