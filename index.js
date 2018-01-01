@@ -6,7 +6,7 @@ const Table = require('cli-table')
 const FILE = process.argv[2] || 'Export'
 const TRANSFORM = process.argv[3] || 'metgoal'
 const MOVE = +(process.argv[4] || 500)
-const MIN_DAYS = +(process.argv[4] || 365)
+const MIN_DAYS = TRANSFORM === 'metgoal' ? 365 : 0
 
 const TODAY = moment()
 const DATE_FORMAT = 'M/D/YY'
