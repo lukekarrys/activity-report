@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const CSV = require('csvtojson')
 const _ = require('lodash')
 const moment = require('moment')
@@ -50,7 +52,7 @@ const thru = {
   metgoal: toTable
 }
 
-new CSV().fromFile(`${FILE}.csv`, (err, days) => _.chain(days)
+new CSV().fromFile(FILE, (err, days) => _.chain(days)
   // Add the date as a moment
   .map((d) => (d.date = moment(d['-'], DATE_FORMAT), d))
   // Group by year
