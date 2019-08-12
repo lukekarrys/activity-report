@@ -1,13 +1,12 @@
-# Activity++ Parser
+# activity-report
 
-Parse Activity++ data to see the number of days you've met your goals.
+Parse a CSV of Apple Watch activity data to see a report of your year-over-year data.
 
-## Usage
-1. Clone this project
-1. `npm install`
-1. Export your Activity++ data
-1. Save the `Export.csv` to the root of this directory
-1. `npm start`
+The [Activity++](https://apps.apple.com/us/app/activity/id1089666978) app can generate a CSV of this data.
+
+```sh
+npx activity-report Export.csv
+```
 
 ## Output
 The output will show days meeting your goal vs total days for each year. It will also differentiate between days thru the current date and the year to date.
