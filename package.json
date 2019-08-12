@@ -1,7 +1,8 @@
 {
-  "name": "activity-parser",
-  "description": "Parse Activity++ data to see the number of days you've met your goals.",
+  "name": "activity-report",
+  "description": "Parse a CSV of Apple Watch activity data to see a report of your year-over-year data.",
   "version": "1.0.0",
+  "author": "Luke Karrys <luke@lukekarrys.com>",
   "dependencies": {
     "cli-table": "^0.3.1",
     "csvtojson": "^1.1.7",
@@ -11,7 +12,6 @@
   "keywords": [],
   "license": "ISC",
   "main": "index.js",
-  "private": true,
   "scripts": {
     "start": "node index.js"
   }
