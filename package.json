@@ -1,7 +1,7 @@
 {
   "name": "activity-report",
   "description": "Parse a CSV of Apple Watch activity data to see a report of your year-over-year data.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "Luke Karrys <luke@lukekarrys.com>",
   "dependencies": {
     "cli-table": "^0.3.1",
