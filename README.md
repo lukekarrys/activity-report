@@ -9,6 +9,7 @@ npx activity-report Export.csv
 ```
 
 ## Output
+
 The output will show days meeting your goal vs total days for each year. It will also differentiate between days thru the current date and the year to date.
 
 ```
@@ -22,4 +23,5 @@ The output will show days meeting your goal vs total days for each year. It will
 ```
 
 ### LICENSE
+
 MIT
