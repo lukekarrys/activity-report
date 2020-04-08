@@ -154,7 +154,7 @@ const transform = {
 }[TRANSFORM]
 
 csv()
-  .fromFile(FILE + "sfsdf")
+  .fromFile(FILE)
   .then((days) =>
     _.chain(days)
       // Add the date
