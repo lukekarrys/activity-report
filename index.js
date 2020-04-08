@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
-const CSV = require("csvtojson")
+const csv = require("csvtojson")
 const _ = require("lodash")
-const moment = require("moment")
+const dateFns = require("date-fns")
 const Table = require("cli-table")
 
 const FILE = process.argv[2] || "Export"
 const TRANSFORM = process.argv[3] || "metgoal"
 const MOVE = +(process.argv[4] || 500)
 
-const NOW = moment()
-const DATE_FORMAT = "M/D/YY"
-const YEAR_FORMAT = "YYYY"
+const NOW = new Date()
+const DATE_FORMAT = "M/d/yy"
+const YEAR_FORMAT = "yyyy"
 const GOALS = { MOVE, EXERCISE: 30, STAND: 12 }
 const GOAL_KEYS = Object.keys(GOALS)
 const MAKE_GOAL_OBJECT = (goalValue) =>
@@ -75,9 +75,14 @@ const toTable = (rows) => {
 
 // Generate data thru today and for the whole year
 const goalDataByTodayAndYear = (days, dayGoalValue) => {
-  const thruToday = _.filter(days, (d) =>
-    d.date.clone().year(NOW.year()).isSameOrBefore(NOW, "day")
-  )
+  const thruToday = days.filter((d) => {
+    const { date } = d
+    const dateOnThisYear = dateFns.setYear(date, dateFns.getYear(NOW))
+    return (
+      dateFns.isSameDay(date, dateOnThisYear) ||
+      dateFns.isBefore(date, dateOnThisYear)
+    )
+  })
   return {
     [TODAY]: MAKE_GOAL_OBJECT((goal) =>
       dayGoalValue({ goal, days: thruToday, type: TODAY })
@@ -91,7 +96,7 @@ const goalDataByTodayAndYear = (days, dayGoalValue) => {
 const daysMetGoal = {
   // Only full years or the current year are useful for counting days met goal
   filterYear: ({ days, year }) =>
-    days.length >= 365 || year === NOW.format(YEAR_FORMAT),
+    days.length >= 365 || year === dateFns.format(NOW, YEAR_FORMAT),
   data: ({ days }) =>
     goalDataByTodayAndYear(days, ({ goal, days, type }) => {
       const met = days.filter((day) => day[goal] >= GOALS[goal]).length
@@ -107,7 +112,10 @@ const daysMetGoal = {
 
 const sumTotal = {
   data: ({ days, year }, index, list) => {
-    const daysLeftInYear = moment(`${year}-12-31`).diff(NOW, "days")
+    const daysLeftInYear = dateFns.differenceInDays(
+      dateFns.parseISO(`${year}-12-31`),
+      NOW
+    )
 
     const previousYear =
       list && list[index - 1] && transform.data(list[index - 1])
@@ -145,27 +153,45 @@ const transform = {
   sum: sumTotal,
 }[TRANSFORM]
 
-new CSV().fromFile(FILE, (err, days) =>
-  _.chain(days)
-    // Add the date as a moment
-    .map((d) => ((d.date = moment(d["-"], DATE_FORMAT)), d))
-    // Group by year, remap to array, and sort
-    .groupBy((d) => d.date.format(YEAR_FORMAT))
-    .map((days, year) => ({ year, days }))
-    .sortBy("year")
-    // Sometimes the CSV has bad data from 1969
-    .reject(({ year }) => year === "1969")
-    // Filter data out by year if possible
-    .filter((obj) => (transform.filterYear ? transform.filterYear(obj) : true))
-    // Shape each year object like the GOALS object above
-    .map((obj, index, list) => ({
-      ...obj,
-      data: transform.data(obj, index, list),
-    }))
-    // Make it a table
-    .thru(toTable)
-    // Log it
-    .tap(console.log)
-    // End it
-    .value()
-)
+csv()
+  .fromFile(FILE + "sfsdf")
+  .then((days) =>
+    _.chain(days)
+      // Add the date
+      .map((d) => ((d.date = dateFns.parse(d["-"], DATE_FORMAT, NOW)), d))
+      // Group by year, remap to array, and sort
+      .groupBy((d) => dateFns.format(d.date, YEAR_FORMAT))
+      .map((days, year) => ({ year, days }))
+      .sortBy("year")
+      // Sometimes the CSV has bad data like 1969 dates at the beginning
+      .filter(({ year }, index, list) => {
+        // Don't reject anything if there is only one year
+        if (list.length === 1) return true
+
+        const otherYears = list.map((l) => l.year)
+        const isSequentialYear = (dir) =>
+          Number(otherYears[index + dir]) === Number(year) + dir
+
+        // Discard any non sequential years
+        return (
+          (index === 0 && isSequentialYear(1)) ||
+          (index === list.length - 1 && isSequentialYear(-1)) ||
+          (isSequentialYear(1) && isSequentialYear(-1))
+        )
+      })
+      // Filter data out by year if possible
+      .filter((obj) =>
+        transform.filterYear ? transform.filterYear(obj) : true
+      )
+      // Shape each year object like the GOALS object above
+      .map((obj, index, list) => ({
+        ...obj,
+        data: transform.data(obj, index, list),
+      }))
+      // Make it a table
+      .thru(toTable)
+      // End it
+      .value()
+  )
+  .then(console.log)
+  .catch(console.error)
