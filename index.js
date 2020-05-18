@@ -79,8 +79,8 @@ const goalDataByTodayAndYear = (days, dayGoalValue) => {
     const { date } = d
     const dateOnThisYear = dateFns.setYear(date, dateFns.getYear(NOW))
     return (
-      dateFns.isSameDay(date, dateOnThisYear) ||
-      dateFns.isBefore(date, dateOnThisYear)
+      dateFns.isSameDay(dateOnThisYear, NOW) ||
+      dateFns.isBefore(dateOnThisYear, NOW)
     )
   })
   return {
@@ -163,6 +163,14 @@ csv()
       .groupBy((d) => dateFns.format(d.date, YEAR_FORMAT))
       .map((days, year) => ({ year, days }))
       .sortBy("year")
+      // Filter data out by year if possible
+      .filter((obj) =>
+        transform.filterYear ? transform.filterYear(obj) : true
+      )
+      // Filter out future years
+      .filter(({ year }) => {
+        return Number(year) <= dateFns.getYear(NOW)
+      })
       // Sometimes the CSV has bad data like 1969 dates at the beginning
       .filter(({ year }, index, list) => {
         // Don't reject anything if there is only one year
@@ -173,16 +181,8 @@ csv()
           Number(otherYears[index + dir]) === Number(year) + dir
 
         // Discard any non sequential years
-        return (
-          (index === 0 && isSequentialYear(1)) ||
-          (index === list.length - 1 && isSequentialYear(-1)) ||
-          (isSequentialYear(1) && isSequentialYear(-1))
-        )
+        return (index === 0 && isSequentialYear(1)) || index > 1
       })
-      // Filter data out by year if possible
-      .filter((obj) =>
-        transform.filterYear ? transform.filterYear(obj) : true
-      )
       // Shape each year object like the GOALS object above
       .map((obj, index, list) => ({
         ...obj,
